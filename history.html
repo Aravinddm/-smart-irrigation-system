@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>History - Smart Irrigation System</title>
+    <link rel="stylesheet" href="css/theme.css">
+</head>
+<body data-page="history">
+
+    <div class="app-layout">
+        <div id="sidebarMount"></div>
+
+        <div class="main-area">
+
+            <div class="topbar">
+                <div>
+                    <h2>History</h2>
+                    <p class="subtitle">Past sensor readings and irrigation actions.</p>
+                </div>
+                <div class="topbar-right">
+                    <div class="user-chip">
+                        <span class="avatar" id="avatarInitial">?</span>
+                        <span id="topUserName">Loading...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>📊 Sensor Reading History</h3>
+                <table>
+                    <thead><tr><th>Moisture (%)</th><th>Temp (°C)</th><th>Time</th></tr></thead>
+                    <tbody id="sensorTableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="panel">
+                <h3>🕒 Motor / Irrigation Log History</h3>
+                <table>
+                    <thead><tr><th>Mode</th><th>Action</th><th>Water Used (L)</th><th>Time</th></tr></thead>
+                    <tbody id="logTableBody"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="js/layout.js"></script>
+    <script>
+        function loadHistory() {
+            fetch("php/report.php")
+                .then(res => res.json())
+                .then(data => {
+                    const sensorBody = document.getElementById("sensorTableBody");
+                    sensorBody.innerHTML = "";
+                    data.sensor_readings.forEach(row => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `<td>${row.moisture_level}</td><td>${row.temperature}</td><td>${row.reading_time}</td>`;
+                        sensorBody.appendChild(tr);
+                    });
+
+                    const logBody = document.getElementById("logTableBody");
+                    logBody.innerHTML = "";
+                    data.irrigation_logs.forEach(row => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `<td>${row.mode}</td><td>${row.action}</td><td>${row.water_used_litres ?? "-"}</td><td>${row.action_time}</td>`;
+                        logBody.appendChild(tr);
+                    });
+                })
+                .catch(err => console.error("History load error:", err));
+        }
+
+        loadHistory();
+    </script>
+
+</body>
+</html>

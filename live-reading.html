@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Live Reading - Smart Irrigation System</title>
+    <link rel="stylesheet" href="css/theme.css">
+</head>
+<body data-page="live-reading">
+
+    <div class="app-layout">
+        <div id="sidebarMount"></div>
+
+        <div class="main-area">
+
+            <div class="topbar">
+                <div>
+                    <h2>Live Reading</h2>
+                    <p class="subtitle">Real-time sensor data for your selected zone and crop.</p>
+                </div>
+                <div class="topbar-right">
+                    <div class="user-chip">
+                        <span class="avatar" id="avatarInitial">?</span>
+                        <span id="topUserName">Loading...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-row">
+                    <h3>🌍 Zone — <span id="zoneNameHeader">--</span></h3>
+                    <span class="pill pill-blue" id="cropBadge">--</span>
+                </div>
+                <p class="disclaimer" style="margin-top:0;">
+                    Climate Zone is the long-term regional pattern and doesn't change — only the readings below update.
+                </p>
+
+                <div id="sensorDetailList"><p>Loading...</p></div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-row">
+                    <h3>⚙️ Motor Control</h3>
+                    <span class="pill pill-green" id="modeBadge2">--</span>
+                </div>
+                <div id="decisionBannerWrap2"></div>
+
+                <div class="motor-row" id="motorRow2">
+                    <div class="motor-left">
+                        <div class="motor-icon">⚙️</div>
+                        <div class="motor-text">
+                            <div class="title">Motor Status</div>
+                            <div class="state" id="motorStateText2">--</div>
+                        </div>
+                    </div>
+                    <div>
+                        <button id="motorOnBtn2">Turn ON</button>
+                        <button id="motorOffBtn2" class="btn-danger">Turn OFF</button>
+                    </div>
+                </div>
+
+                <button id="modeToggleBtn2" class="btn-outline" style="margin-top:14px;">Switch to Automatic Mode</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="js/layout.js"></script>
+    <script>
+        function getZoneId() { return new URLSearchParams(window.location.search).get("zone_id") || "3"; }
+        function getCropId() { return new URLSearchParams(window.location.search).get("crop_id") || "1"; }
+        const cropNames = { "1": "Vegetables", "2": "Wheat", "3": "Rice", "4": "Cotton", "5": "Fruit Trees" };
+
+        let currentMotorMode = "manual";
+
+        function updateModeUI2() {
+            const onBtn = document.getElementById("motorOnBtn2");
+            const offBtn = document.getElementById("motorOffBtn2");
+            const toggleBtn = document.getElementById("modeToggleBtn2");
+
+            if (currentMotorMode === "auto") {
+                onBtn.style.display = "none";
+                offBtn.style.display = "none";
+                toggleBtn.textContent = "Switch to Manual Mode";
+            } else {
+                onBtn.style.display = "inline-block";
+                offBtn.style.display = "inline-block";
+                toggleBtn.textContent = "Switch to Automatic Mode";
+            }
+        }
+
+        function loadDashboard() {
+            const zoneId = getZoneId();
+            const cropId = getCropId();
+            document.getElementById("cropBadge").textContent = cropNames[cropId] || "No crop set";
+
+            fetch("php/dashboard-data.php?zone_id=" + zoneId + "&crop_id=" + cropId)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById("sensorDetailList").innerHTML = '<div class="disclaimer">' + data.error + '</div>';
+                        return;
+                    }
+
+                    document.getElementById("zoneNameHeader").textContent = data.zone_display_name;
+
+                    if (data.zone_average) {
+                        let html = '<div class="sensor-list-row"><span class="s-label">Zone Average Moisture</span><span class="s-value">' + data.zone_average.moisture_level + '%</span></div>';
+                        html += '<div class="sensor-list-row"><span class="s-label">Zone Average Temperature</span><span class="s-value">' + data.zone_average.temperature + '°C</span></div>';
+                        data.sensors.forEach(s => {
+                            html += '<div class="sensor-list-row"><span class="s-label">' + s.name + '</span><span class="s-value">' +
+                                (s.moisture_level !== null ? s.moisture_level + '% · ' + s.temperature + '°C · ' + s.reading_time : 'No readings yet') + '</span></div>';
+                        });
+                        document.getElementById("sensorDetailList").innerHTML = html;
+                    } else {
+                        document.getElementById("sensorDetailList").innerHTML = '<div class="disclaimer">' + (data.message || "No data yet.") + '</div>';
+                    }
+
+                    const isOn = data.motor.status === "on";
+                    currentMotorMode = data.motor.mode;
+                    document.getElementById("modeBadge2").textContent = currentMotorMode === "auto" ? "Automatic Mode" : "Manual Mode";
+                    document.getElementById("motorStateText2").textContent = isOn ? "ON — Running" : "OFF";
+                    document.getElementById("motorStateText2").className = "state " + (isOn ? "on" : "off");
+                    document.getElementById("motorRow2").className = "motor-row" + (isOn ? "" : " off");
+                    updateModeUI2();
+
+                    const bannerWrap = document.getElementById("decisionBannerWrap2");
+                    if (currentMotorMode === "auto" && data.decision) {
+                        const needsWater = data.decision.includes("Water is required");
+                        bannerWrap.innerHTML =
+                            '<div class="status-banner ' + (needsWater ? "status-danger" : "status-success") + '">' +
+                            '<span class="status-icon">' + (needsWater ? "⚠️" : "✅") + '</span>' +
+                            '<div><strong>Automatic Decision</strong><span class="desc">' + data.decision + '</span></div></div>';
+                    } else {
+                        bannerWrap.innerHTML = "";
+                    }
+                })
+                .catch(err => console.error("Dashboard load error:", err));
+        }
+
+        document.getElementById("motorOnBtn2").addEventListener("click", function () {
+            fetch("php/motor.php?action=on&mode=manual").then(() => loadDashboard());
+        });
+        document.getElementById("motorOffBtn2").addEventListener("click", function () {
+            fetch("php/motor.php?action=off&mode=manual").then(() => loadDashboard());
+        });
+        document.getElementById("modeToggleBtn2").addEventListener("click", function () {
+            const newMode = currentMotorMode === "auto" ? "manual" : "auto";
+            fetch("php/motor.php?action=" + (currentMotorMode === "auto" ? "off" : "on") + "&mode=" + newMode)
+                .then(() => loadDashboard());
+        });
+
+        loadDashboard();
+        setInterval(loadDashboard, 10000);
+    </script>
+
+</body>
+</html>

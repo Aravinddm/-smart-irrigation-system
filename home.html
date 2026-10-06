@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign In / Sign Up - Smart Irrigation System</title>
+    <link rel="stylesheet" href="css/theme.css">
+</head>
+<body>
+
+    <div class="auth-wrap">
+        <div class="auth-card">
+
+            <div id="loginForm">
+                <h2>🌿 Smart Irrigation</h2>
+                <p class="sub">Sign in to monitor your fields and manage irrigation.</p>
+
+                <form id="loginFormEl" action="php/login.php" method="POST">
+                    <label>Username</label>
+                    <input type="text" name="username" required>
+
+                    <label>Password</label>
+                    <input type="password" name="password" required>
+
+                    <button type="submit">Sign in</button>
+                </form>
+                <div class="form-msg" id="loginMsg"></div>
+
+                <div class="auth-toggle">
+                    Don't have an account? <a href="#" onclick="toggleForms(); return false;">Create one</a>
+                </div>
+            </div>
+
+            <div id="signupForm" class="hidden">
+                <h2>Create Account</h2>
+                <p class="sub">Set up an account to start monitoring your fields.</p>
+
+                <form id="signupFormEl" action="php/signup.php" method="POST">
+                    <label>Username</label>
+                    <input type="text" name="username" required>
+
+                    <label>Password</label>
+                    <input type="password" name="password" required minlength="6">
+
+                    <label>Confirm Password</label>
+                    <input type="password" name="confirm_password" required minlength="6">
+
+                    <button type="submit">Sign up</button>
+                </form>
+                <div class="form-msg" id="signupMsg"></div>
+
+                <div class="auth-toggle">
+                    Already have an account? <a href="#" onclick="toggleForms(); return false;">Sign in</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function toggleForms() {
+            document.getElementById("loginForm").classList.toggle("hidden");
+            document.getElementById("signupForm").classList.toggle("hidden");
+        }
+
+        // Submit via fetch so we can show inline errors instead of a raw PHP echo page
+        function wireAjaxForm(formId, msgId) {
+            const form = document.getElementById(formId);
+            form.addEventListener("submit", function (e) {
+                e.preventDefault();
+                const msgEl = document.getElementById(msgId);
+                msgEl.textContent = "";
+
+                fetch(form.action, { method: "POST", body: new FormData(form) })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.href = data.redirect;
+                        } else {
+                            msgEl.textContent = data.message;
+                        }
+                    })
+                    .catch(() => { msgEl.textContent = "Something went wrong. Please try again."; });
+            });
+        }
+
+        wireAjaxForm("loginFormEl", "loginMsg");
+        wireAjaxForm("signupFormEl", "signupMsg");
+    </script>
+
+</body>
+</html>

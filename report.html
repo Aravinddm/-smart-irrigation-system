@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Report - Smart Irrigation System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <h1>Irrigation Report</h1>
+
+    <h2>Sensor Reading History</h2>
+    <table border="1" cellpadding="6">
+        <thead>
+            <tr>
+                <th>Moisture (%)</th>
+                <th>Condition</th>
+                <th>Temperature (°C)</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody id="sensorTableBody">
+        </tbody>
+    </table>
+
+    <h2>Motor / Irrigation Log History</h2>
+    <table border="1" cellpadding="6">
+        <thead>
+            <tr>
+                <th>Mode</th>
+                <th>Action</th>
+                <th>Water Used (L)</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody id="logTableBody">
+        </tbody>
+    </table>
+
+    <script src="js/report.js"></script>
+</body>
+</html>

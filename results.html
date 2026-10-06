@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Smart Irrigation System</title>
+    <link rel="stylesheet" href="css/theme.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body data-page="dashboard">
+
+    <div class="app-layout">
+        <div id="sidebarMount"></div>
+
+        <div class="main-area">
+
+            <div class="topbar">
+                <div>
+                    <h2>Dashboard</h2>
+                    <p class="subtitle">Monitor your field conditions and get real-time irrigation recommendations.</p>
+                </div>
+                <div class="topbar-right">
+                    <span id="topDate"></span>
+                    <div class="user-chip">
+                        <span class="avatar" id="avatarInitial">?</span>
+                        <span id="topUserName">Loading...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STAT CARDS -->
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="icon-badge icon-blue">💧</div>
+                    <div class="label">Soil Moisture</div>
+                    <div class="value" id="statMoisture">--%</div>
+                    <span class="pill pill-red" id="statMoistureCond">--</span>
+                    <div class="note" id="statMoistureNote">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon-badge icon-orange">🌡️</div>
+                    <div class="label">Temperature</div>
+                    <div class="value" id="statTemp">--°C</div>
+                    <span class="pill pill-orange" id="statTempCond">--</span>
+                    <div class="note" id="statTempNote">Based on latest reading</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon-badge icon-green">☁️</div>
+                    <div class="label">Climate Zone</div>
+                    <div class="value" id="statZone">--</div>
+                    <span class="pill pill-green" id="statZoneCond">--</span>
+                    <div class="note">Long-term regional pattern</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon-badge icon-purple">🌱</div>
+                    <div class="label">Crop Type</div>
+                    <div class="value" id="statCrop">--</div>
+                    <span class="pill pill-blue" id="statCropNeed">--</span>
+                    <div class="note" id="statCropThreshold">--</div>
+                </div>
+            </div>
+
+            <div class="two-col">
+                <div>
+                    <!-- IRRIGATION STATUS -->
+                    <div class="panel">
+                        <div class="panel-row">
+                            <h3>💧 Irrigation Status</h3>
+                            <span class="pill pill-green" id="modeBadge">--</span>
+                        </div>
+                        <div id="decisionBannerWrap"></div>
+
+                        <div class="motor-row" id="motorRow">
+                            <div class="motor-left">
+                                <div class="motor-icon">⚙️</div>
+                                <div class="motor-text">
+                                    <div class="title">Motor Status</div>
+                                    <div class="state" id="motorStateText">--</div>
+                                </div>
+                            </div>
+                            <button id="motorToggleBtn">Turn OFF</button>
+                        </div>
+                    </div>
+
+                    <!-- TREND CHART -->
+                    <div class="panel">
+                        <h3>📈 Soil Moisture Trend</h3>
+                        <canvas id="trendChart" height="90"></canvas>
+                    </div>
+                </div>
+
+                <div>
+                    <!-- LIVE SENSOR READINGS -->
+                    <div class="panel">
+                        <h3>📶 Live Sensor Readings</h3>
+                        <div id="liveSensorList"><p>Loading...</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="two-col">
+                <!-- CONFIGURATION & LOCATION -->
+                <div class="panel">
+                    <h3>📍 Configuration & Location</h3>
+                    <div class="config-grid">
+                        <div class="config-item">
+                            <div class="cfg-icon icon-green">☀️</div>
+                            <div><div class="cfg-label">Climate Zone</div><div class="cfg-value" id="cfgZone">--</div></div>
+                        </div>
+                        <div class="config-item">
+                            <div class="cfg-icon icon-purple">🌱</div>
+                            <div><div class="cfg-label">Crop Type</div><div class="cfg-value" id="cfgCrop">--</div></div>
+                        </div>
+                        <div class="config-item">
+                            <div class="cfg-icon icon-orange">🌡️</div>
+                            <div><div class="cfg-label">Temperature</div><div class="cfg-value" id="cfgTemp">--</div></div>
+                        </div>
+                        <div class="config-item">
+                            <div class="cfg-icon icon-blue">📊</div>
+                            <div><div class="cfg-label">Zone Benchmark</div><div class="cfg-value" id="cfgBenchmark">--</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>ℹ️ About These Numbers</h3>
+                    <p class="disclaimer">
+                        Moisture thresholds shown here are <strong>configured system values</strong> for this prototype,
+                        not a universal agricultural standard. Climate Zone reflects the long-term regional pattern and
+                        does not change day to day — only live sensor readings update.
+                    </p>
+                </div>
+            </div>
+
+            <!-- RECOMMENDATION -->
+            <div class="recommend-strip">
+                <div class="rec-left">
+                    <div class="rec-icon">💡</div>
+                    <div>
+                        <strong>Recommendation</strong>
+                        <span class="desc" id="recommendText">--</span>
+                    </div>
+                </div>
+                <a href="live-reading.html" class="btn btn-outline">View Details ›</a>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="js/layout.js"></script>
+    <script>
+        function getZoneId() {
+            return new URLSearchParams(window.location.search).get("zone_id") || "3";
+        }
+        function getCropId() {
+            return new URLSearchParams(window.location.search).get("crop_id") || "1";
+        }
+
+        const cropNames = { "1": "Vegetables", "2": "Wheat", "3": "Rice", "4": "Cotton", "5": "Fruit Trees" };
+        const cropThresholds = { "1": 40, "2": 35, "3": 55, "4": 30, "5": 38 };
+
+        const zoneBenchmarks = {
+            "1": "50–75% (Tropical)", "2": "15–35% (Arid)", "3": "35–60% (Temperate)",
+            "4": "30–55% (Continental)", "5": "10–30% (Polar)"
+        };
+
+        document.getElementById("topDate").textContent = new Date().toLocaleDateString(undefined, {
+            weekday: "short", day: "2-digit", month: "short", year: "numeric"
+        }) + " | " + new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+
+        let trendChart = null;
+
+        function moistureCondition(m) {
+            if (m < 30) return { label: "Dry Land", pill: "pill-red" };
+            if (m < 70) return { label: "Moist Land", pill: "pill-green" };
+            return { label: "Wet / Waterlogged", pill: "pill-blue" };
+        }
+
+        function loadDashboard() {
+            const zoneId = getZoneId();
+            const cropId = getCropId();
+
+            fetch("php/dashboard-data.php?zone_id=" + zoneId + "&crop_id=" + cropId)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById("liveSensorList").innerHTML = '<div class="disclaimer">' + data.error + '</div>';
+                        return;
+                    }
+
+                    const cropName = cropNames[cropId] || "Not set";
+                    const threshold = cropThresholds[cropId] || null;
+
+                    document.getElementById("statZone").textContent = data.zone_display_name;
+                    document.getElementById("statZoneCond").textContent = data.zone_name;
+                    document.getElementById("statCrop").textContent = cropName;
+                    document.getElementById("statCropNeed").textContent = threshold ? "High Water Need" : "--";
+                    document.getElementById("statCropThreshold").textContent = threshold ? "Requires ≥ " + threshold + "% moisture" : "";
+
+                    document.getElementById("cfgZone").textContent = data.zone_display_name;
+                    document.getElementById("cfgCrop").textContent = cropName;
+                    document.getElementById("cfgBenchmark").textContent = zoneBenchmarks[zoneId] || "--";
+
+                    if (data.zone_average) {
+                        const m = data.zone_average.moisture_level;
+                        const t = data.zone_average.temperature;
+                        const cond = moistureCondition(m);
+
+                        document.getElementById("statMoisture").textContent = m + "%";
+                        document.getElementById("statMoistureCond").textContent = cond.label;
+                        document.getElementById("statMoistureCond").className = "pill " + cond.pill;
+                        document.getElementById("statMoistureNote").textContent =
+                            threshold ? (m < threshold ? "Below crop requirement" : "Meets crop requirement") : "";
+
+                        document.getElementById("statTemp").textContent = t + "°C";
+                        document.getElementById("statTempCond").textContent = t > 30 ? "Hot" : (t > 22 ? "Warm" : "Mild");
+                        document.getElementById("cfgTemp").textContent = t + "°C";
+
+                        let html = "";
+                        data.sensors.forEach(s => {
+                            if (s.moisture_level !== null) {
+                                html += '<div class="sensor-list-row"><span class="s-label">💧 ' + s.name + '</span><span class="s-value">' + s.moisture_level + '%</span></div>';
+                            } else {
+                                html += '<div class="sensor-list-row"><span class="s-label">💧 ' + s.name + '</span><span class="s-value">No data</span></div>';
+                            }
+                        });
+                        html += '<div class="sensor-list-row"><span class="s-label">🌡️ Temperature</span><span class="s-value">' + t + '°C</span></div>';
+                        document.getElementById("liveSensorList").innerHTML = html;
+
+                        document.getElementById("recommendText").textContent =
+                            (data.motor.mode === "auto" && data.decision) ? data.decision :
+                            (threshold && m < threshold ? "Soil is dry — irrigate soon to avoid crop stress." : "Moisture is in a healthy range for this crop.");
+                    } else {
+                        document.getElementById("liveSensorList").innerHTML = '<div class="disclaimer">' + (data.message || "No readings yet.") + '</div>';
+                    }
+
+                    const isOn = data.motor.status === "on";
+                    const isAuto = data.motor.mode === "auto";
+                    document.getElementById("modeBadge").textContent = isAuto ? "Automatic Mode" : "Manual Mode";
+                    document.getElementById("motorStateText").textContent = isOn ? "ON — Running" : "OFF";
+                    document.getElementById("motorStateText").className = "state " + (isOn ? "on" : "off");
+                    document.getElementById("motorRow").className = "motor-row" + (isOn ? "" : " off");
+
+                    const toggleBtn = document.getElementById("motorToggleBtn");
+                    if (isAuto) {
+                        toggleBtn.style.display = "none";
+                    } else {
+                        toggleBtn.style.display = "inline-block";
+                        toggleBtn.textContent = isOn ? "Turn OFF" : "Turn ON";
+                        toggleBtn.className = isOn ? "btn-danger" : "";
+                    }
+
+                    const bannerWrap = document.getElementById("decisionBannerWrap");
+                    if (isAuto && data.decision) {
+                        const needsWater = data.decision.includes("Water is required");
+                        bannerWrap.innerHTML =
+                            '<div class="status-banner ' + (needsWater ? "status-danger" : "status-success") + '">' +
+                            '<span class="status-icon">' + (needsWater ? "⚠️" : "✅") + '</span>' +
+                            '<div><strong>' + (needsWater ? "Water is required!" : "Moisture sufficient") + '</strong>' +
+                            '<span class="desc">' + data.decision + '</span></div></div>';
+                    } else {
+                        bannerWrap.innerHTML = "";
+                    }
+                })
+                .catch(err => console.error("Dashboard load error:", err));
+        }
+
+        document.getElementById("motorToggleBtn").addEventListener("click", function () {
+            const isOn = document.getElementById("motorStateText").textContent.startsWith("ON");
+            fetch("php/motor.php?action=" + (isOn ? "off" : "on") + "&mode=manual")
+                .then(() => { loadDashboard(); loadTrend(); });
+        });
+
+        function loadTrend() {
+            fetch("php/report.php")
+                .then(res => res.json())
+                .then(data => {
+                    const readings = data.sensor_readings.slice(0, 10).reverse();
+                    const labels = readings.map(r => (r.reading_time || "").split(" ")[1] || r.reading_time);
+                    const values = readings.map(r => r.moisture_level);
+
+                    const ctx = document.getElementById("trendChart").getContext("2d");
+                    if (trendChart) trendChart.destroy();
+                    trendChart = new Chart(ctx, {
+                        type: "line",
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: "Moisture (%)",
+                                data: values,
+                                borderColor: "#2f7ff0",
+                                backgroundColor: "rgba(47,127,240,0.08)",
+                                fill: true,
+                                tension: 0.35,
+                                pointRadius: 3
+                            }]
+                        },
+                        options: {
+                            plugins: { legend: { display: false } },
+                            scales: { y: { min: 0, max: 100 } }
+                        }
+                    });
+                })
+                .catch(err => console.error("Trend load error:", err));
+        }
+
+        loadDashboard();
+        loadTrend();
+    </script>
+
+</body>
+</html>

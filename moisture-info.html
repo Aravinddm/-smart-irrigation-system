@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Settings - Smart Irrigation System</title>
+    <link rel="stylesheet" href="css/theme.css">
+</head>
+<body data-page="settings">
+
+    <div class="app-layout">
+        <div id="sidebarMount"></div>
+
+        <div class="main-area">
+
+            <div class="topbar">
+                <div>
+                    <h2>Settings</h2>
+                    <p class="subtitle">Configure your climate zone and crop, and learn what drives soil moisture.</p>
+                </div>
+                <div class="topbar-right">
+                    <div class="user-chip">
+                        <span class="avatar" id="avatarInitial">?</span>
+                        <span id="topUserName">Loading...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>🌱 What is Soil Moisture?</h3>
+                <p>Soil moisture is the amount of water held within the spaces between soil particles. It's usually measured as a percentage, representing how saturated the soil is compared to its maximum water-holding capacity.</p>
+
+                <h3>Why It Matters</h3>
+                <p>Soil moisture directly affects plant growth, crop yield, and ecosystem health. Too little water stresses plants and stunts growth; too much can drown roots and promote disease.</p>
+
+                <h3>Factors Affecting Soil Moisture</h3>
+                <p><strong>Soil Type:</strong> Sandy soils drain quickly and hold less water; clay soils retain water longer but drain poorly.</p>
+                <p><strong>Weather:</strong> Rainfall, humidity, and temperature all directly change how much moisture is present and how fast it evaporates.</p>
+                <p><strong>Irrigation:</strong> Manual or automated watering directly adds moisture, and scheduling affects how consistently levels are maintained.</p>
+                <p><strong>Drainage:</strong> Slope, soil compaction, and underlying rock layers affect how quickly excess water leaves the area.</p>
+            </div>
+
+            <div class="panel">
+                <h3>📏 Configured Moisture Thresholds</h3>
+                <p class="disclaimer">
+                    These ranges are system-defined thresholds used by this prototype for demonstration purposes.
+                    They are <strong>not</strong> a universal agricultural standard — actual ideal moisture varies by
+                    crop, soil type, sensor calibration, and measurement method.
+                </p>
+                <p>🌵 <strong>Dry Land:</strong> 30–39% — below this system's configured threshold; irrigation is likely needed.</p>
+                <p>💧 <strong>Moist Land:</strong> 40–69% — within this system's configured "adequate" range.</p>
+                <p>🌊 <strong>Wet / Waterlogged:</strong> 70% and above — above this system's configured threshold; risk of root rot and poor aeration.</p>
+            </div>
+
+            <div class="panel">
+                <h3>⚙️ Configure Zone & Crop</h3>
+
+                <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Climate Zone</label>
+                <select id="zoneSelect" onchange="showPreview()" style="width:100%; padding:11px 13px; margin-top:6px; border:1.5px solid var(--card-border); border-radius:10px; font-size:14px;">
+                    <option value="">-- Select a zone --</option>
+                    <option value="1">🌴 Tropical</option>
+                    <option value="2">🏜️ Arid</option>
+                    <option value="3">🍂 Temperate</option>
+                    <option value="4">🌲 Continental</option>
+                    <option value="5">❄️ Polar</option>
+                </select>
+
+                <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-top:14px; display:block;">Crop Type</label>
+                <select id="cropSelect" style="width:100%; padding:11px 13px; margin-top:6px; border:1.5px solid var(--card-border); border-radius:10px; font-size:14px;">
+                    <option value="1">Vegetables</option>
+                    <option value="2">Wheat</option>
+                    <option value="3">Rice</option>
+                    <option value="4">Cotton</option>
+                    <option value="5">Fruit Trees</option>
+                </select>
+
+                <div class="disclaimer" id="previewBox" style="display:none; margin-top:16px;"></div>
+
+                <button class="full-width" id="proceedBtn" onclick="proceed()" disabled style="margin-top:20px;">Proceed to Dashboard</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="js/layout.js"></script>
+    <script>
+        const zoneInfo = {
+            1: "Typically high humidity and frequent rainfall. Expect moisture readings often in the Moist-to-Wet range.",
+            2: "Low rainfall and high evaporation. Expect readings frequently in the Dry range.",
+            3: "Moderate, seasonal rainfall. Expect a balanced mix of Dry and Moist readings depending on the season.",
+            4: "Cold winters, warmer summers, variable rainfall. Expect seasonal swings between Dry and Moist.",
+            5: "Very low precipitation, mostly frozen ground for much of the year. Expect mostly Dry readings."
+        };
+
+        function showPreview() {
+            const zone = document.getElementById("zoneSelect").value;
+            const previewBox = document.getElementById("previewBox");
+            const proceedBtn = document.getElementById("proceedBtn");
+
+            if (zone) {
+                previewBox.style.display = "block";
+                previewBox.innerHTML = "<strong>What you'll see on the Dashboard:</strong><br>" + zoneInfo[zone];
+                proceedBtn.disabled = false;
+            } else {
+                previewBox.style.display = "none";
+                proceedBtn.disabled = true;
+            }
+        }
+
+        function proceed() {
+            const zone = document.getElementById("zoneSelect").value;
+            const crop = document.getElementById("cropSelect").value;
+            if (zone) {
+                window.location.href = "results.html?zone_id=" + zone + "&crop_id=" + crop;
+            }
+        }
+    </script>
+
+</body>
+</html>

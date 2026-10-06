@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign In / Sign Up - Smart Irrigation System</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+            background: linear-gradient(135deg, #4b6cf0 0%, #7b4bd6 50%, #9b4bd6 100%);
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 48px;
+            background: rgba(255,255,255,0.95);
+        }
+
+        nav .logo {
+            font-size: 20px;
+            font-weight: 800;
+            color: #5b3fd6;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            padding: 70px 60px;
+            gap: 40px;
+        }
+
+        .hero-text {
+            flex: 1;
+            min-width: 300px;
+            color: #fff;
+        }
+
+        .hero-text h1 {
+            font-size: 46px;
+            font-weight: 800;
+            line-height: 1.15;
+            margin: 0 0 18px;
+        }
+
+        .hero-text p {
+            font-size: 16px;
+            color: #e8e4fb;
+            max-width: 420px;
+            line-height: 1.7;
+            margin: 0 0 10px;
+        }
+
+        .feature-list {
+            margin-top: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .feature-list span {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #fff;
+        }
+
+        .feature-list span::before {
+            content: "✓";
+            width: 22px;
+            height: 22px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .auth-card {
+            flex: 1;
+            min-width: 320px;
+            max-width: 380px;
+            background: #fff;
+            border-radius: 20px;
+            padding: 36px 32px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.25);
+        }
+
+        .auth-card h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1b2a1e;
+            margin: 0 0 22px;
+        }
+
+        label {
+            display: block;
+            margin-top: 14px;
+            font-weight: 600;
+            font-size: 12px;
+            color: #5f6d61;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 12px 14px;
+            margin-top: 6px;
+            border: 1.5px solid #e2e8e3;
+            border-radius: 10px;
+            font-size: 15px;
+            background: #fbfdfb;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #7b4bd6;
+            box-shadow: 0 0 0 3px #ece5fb;
+        }
+
+        button {
+            width: 100%;
+            background: linear-gradient(135deg, #6b4bd6, #9b4bd6);
+            color: #fff;
+            border: none;
+            padding: 13px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 22px;
+            box-shadow: 0 8px 20px rgba(123, 75, 214, 0.35);
+        }
+
+        button:hover { opacity: 0.92; }
+
+        .toggle-links { text-align: center; margin-top: 16px; }
+        .toggle-links a { color: #7b4bd6; cursor: pointer; font-weight: 600; text-decoration: underline; }
+        .hidden { display: none; }
+        .error-msg { color: #c0392b; font-size: 13px; margin-top: 6px; }
+        .strength { font-size: 13px; margin-top: 4px; font-weight: bold; }
+
+        @media (max-width: 800px) {
+            .hero { padding: 40px 24px; }
+            .hero-text h1 { font-size: 32px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">💧 Smart Irrigation System</div>
+    </nav>
+
+    <div class="hero">
+        <div class="hero-text">
+            <h1>Smart irrigation, simplified.</h1>
+            <p>Monitor soil moisture, control your irrigation motor, and get personalized recommendations — all from one dashboard.</p>
+            <div class="feature-list">
+                <span>Live sensor data & motor control</span>
+                <span>Climate-zone based recommendations</span>
+                <span>Full irrigation history & reports</span>
+            </div>
+        </div>
+
+        <div class="auth-card">
+            <form id="loginForm" action="php/login.php" method="POST">
+                <h2>Sign in</h2>
+                <label>Username:</label>
+                <input type="text" name="username" required>
+
+                <label>Password:</label>
+                <input type="password" name="password" required>
+
+                <button type="submit">Sign in</button>
+                <div class="toggle-links">
+                    Don't have an account? <a onclick="toggleForms()">Create one</a>
+                </div>
+            </form>
+
+            <form id="signupForm" class="hidden" action="php/signup.php" method="POST" onsubmit="return validateSignup()">
+                <h2>Create account</h2>
+                <label>Username:</label>
+                <input type="text" name="username" id="signupUsername" required>
+
+                <label>Password:</label>
+                <input type="password" name="password" id="signupPassword" required oninput="checkStrength()">
+                <div class="strength" id="strengthLabel"></div>
+
+                <label>Confirm password:</label>
+                <input type="password" name="confirm_password" id="confirmPassword" required>
+                <div class="error-msg" id="signupError"></div>
+
+                <button type="submit">Create account</button>
+                <div class="toggle-links">
+                    Already have an account? <a onclick="toggleForms()">Sign in</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleForms() {
+            document.getElementById("loginForm").classList.toggle("hidden");
+            document.getElementById("signupForm").classList.toggle("hidden");
+        }
+
+        function checkStrength() {
+            const password = document.getElementById("signupPassword").value;
+            const label = document.getElementById("strengthLabel");
+
+            if (password.length === 0) {
+                label.textContent = "";
+            } else if (password.length < 6) {
+                label.textContent = "Weak (min 6 characters)";
+                label.style.color = "#c0392b";
+            } else if (password.length < 10) {
+                label.textContent = "Medium strength";
+                label.style.color = "#f9a825";
+            } else {
+                label.textContent = "Strong";
+                label.style.color = "#2e7d32";
+            }
+        }
+
+        function validateSignup() {
+            const password = document.getElementById("signupPassword").value;
+            const confirm = document.getElementById("confirmPassword").value;
+            const errorEl = document.getElementById("signupError");
+
+            if (password.length < 6) {
+                errorEl.textContent = "Password must be at least 6 characters.";
+                return false;
+            }
+            if (password !== confirm) {
+                errorEl.textContent = "Passwords do not match.";
+                return false;
+            }
+            errorEl.textContent = "";
+            return true;
+        }
+    </script>
+
+</body>
+</html>
